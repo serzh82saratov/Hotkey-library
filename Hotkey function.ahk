@@ -14,6 +14,8 @@ Hotkey_Main(VKCode, SCCode, Option = 0, IsMod = 0)  {
 		, Symbols := "|vkBA|vkBB|vkBC|vkBD|vkBE|vkBF|vkC0|vkDB|vkDC|vkDD|vkDE|vk41|vk42|"
 				. "vk43|vk44|vk45|vk46|vk47|vk48|vk49|vk4A|vk4B|vk4C|vk4D|vk4E|"
 				. "vk4F|vk50|vk51|vk52|vk53|vk54|vk55|vk56|vk57|vk58|vk59|vk5A|"
+	Local sIsMod
+
 	If (Option = "Down")
 	{
 		If (K["M" IsMod] != "")
@@ -69,6 +71,7 @@ Hotkey_PressName:
 }
 
 Hotkey_ExtKeyInit()   {
+	Local MouseKey
 	MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
 	#If Hotkey_Hook
 	#If
@@ -89,7 +92,8 @@ Hotkey_Reset()   {
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)   {
 	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
 		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}, SaveFormat
-	
+	Local VkCode, SCCode, sc, IsMod
+
 	If !Hotkey_Hook
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
 	SaveFormat := A_FormatInteger
