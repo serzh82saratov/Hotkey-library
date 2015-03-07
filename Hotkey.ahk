@@ -107,9 +107,13 @@ Hotkey_ExtKeyInit(Options)  {
 	}
 	IfInString, Options, J
 	{
+		
+		SaveFormat := A_FormatInteger
+		SetFormat, IntegerFast, D
 		Hotkey, IF, Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
 		Loop, 128
 			Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName
+		SetFormat, IntegerFast, %SaveFormat%
 	}
 	IfInString, Options, L
 	{
