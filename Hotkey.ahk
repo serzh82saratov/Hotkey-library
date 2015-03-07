@@ -12,7 +12,7 @@ Hotkey_Init(Controls, Options = "")  {
 	SetFormat, IntegerFast, %SaveFormat%
 	If !IsStart
 		Hotkey_SetWinEventHook(0x8005, 0x8005, 0, RegisterCallback("Hotkey_WinEvent", "F"), 0, 0, 0)   ;  EVENT_OBJECT_FOCUS := 0x8005
-		, Hotkey_RButton(), Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx(), 1), IsStart := 1
+		, Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx(), 1), IsStart := 1
 	ControlGetFocus, IsFocus, A
 	ControlGet, FocusHwnd, Hwnd,, %IsFocus%, A
 	If Hotkey_Arr(FocusHwnd)
@@ -122,6 +122,8 @@ Hotkey_ExtKeyInit(Options)  {
 		Hotkey, IF, Hotkey_Arr("Hook")
 		Hotkey, RButton, Hotkey_PressName
 	}
+	Else
+		Hotkey_RButton()
 	Hotkey, IF
 }
 
