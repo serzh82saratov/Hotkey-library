@@ -107,7 +107,6 @@ Hotkey_ExtKeyInit(Options)  {
 	}
 	IfInString, Options, J
 	{
-		
 		SaveFormat := A_FormatInteger
 		SetFormat, IntegerFast, D
 		Hotkey, IF, Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
