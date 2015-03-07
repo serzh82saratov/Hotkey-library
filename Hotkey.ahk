@@ -121,9 +121,10 @@ Hotkey_ExtKeyInit(Options)  {
 	{
 		Hotkey, IF, Hotkey_Arr("Hook")
 		Hotkey, RButton, Hotkey_PressName
+		Hotkey_RButton(1)
 	}
 	Else
-		Hotkey_RButton()
+		Hotkey_RButton(0)
 	Hotkey, IF
 }
 
@@ -179,10 +180,14 @@ Hotkey_IsRegControl()   {
 	Return Hotkey_Arr(Control) != ""
 }
 
-Hotkey_RButton()   {
+Hotkey_RButton(RM)   {
 	#IF Hotkey_IsRegControl()
+	#IF !Hotkey_Arr("Hook") && Hotkey_IsRegControl()
 	#IF
-	Hotkey, IF, Hotkey_IsRegControl()
+	If RM
+		Hotkey, IF, !Hotkey_Arr("Hook") && Hotkey_IsRegControl()
+	Else
+		Hotkey, IF, Hotkey_IsRegControl()
 	Hotkey, RButton Up, Hotkey_RButton
 	Hotkey, IF
 	Return
