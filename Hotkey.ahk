@@ -1,6 +1,6 @@
 Hotkey_Init(Controls, Options = "")  {
 	Static IsStart
-	Local D1, D2, D, SaveFormat
+	Local D1, D2, D, SaveFormat, IsFocus, FocusHwnd, Hwnd
 	SaveFormat := A_FormatInteger
 	SetFormat, IntegerFast, H
 	Loop, Parse, Controls, |
