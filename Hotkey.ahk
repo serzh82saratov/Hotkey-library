@@ -210,10 +210,10 @@ Hotkey_RButton(RM)   {
 Hotkey_IniRead(Key, Section, Path) {
 	Local Data
 	IniRead, Data, % Path, % Section, % Key, % A_Space
-	Return Hotkey_FormatHKToStr(Data)
+	Return Hotkey_HKToStr(Data)
 }
 
-Hotkey_FormatHKToStr(Key) {
+Hotkey_HKToStr(Key) {
 	Local K, K1, K2, KeyName
 	RegExMatch(Key, "S)^([\^\+!#]*)\{?(.*?)}?$", K)
 	If (K2 = "")
@@ -226,7 +226,7 @@ Hotkey_FormatHKToStr(Key) {
 			. (InStr(K1,"+")?"Shift+":"")(InStr(K1,"#")?"Win+":"") KeyName
 }
 
-Hotkey_FormatStrToHK(Str) {
+Hotkey_StrToHK(Str) {
 	Static Buttons := ":ж:`;:|vkBA| :=:|vkBB| :б:,:|vkBC| :-:|vkBD| :ю:.:|vkBE|"
 		. ":/:|vkBF| :``:ё:|vkC0| :х:[:|vkDB| :\:|vkDC| :ъ:]:|vkDD| :э:':|vkDE|"
 		. ":A:|vk41| :B:|vk42| :C:|vk43| :D:|vk44| :E:|vk45| :F:|vk46| :G:|vk47|"
@@ -244,7 +244,7 @@ Hotkey_FormatStrToHK(Str) {
 		. (InStr(K1,"Shift+")?"+":"")(InStr(K1,"Win+")?"#":"")(vk1 = "" ? K2 : vk1)
 }
 
-Hotkey_FormatHKToSend(Key, Section = "", Path = "") {
+Hotkey_HKToSend(Key, Section = "", Path = "") {
 	Local Data
 	If (Section != "")
 		IniRead, Data, % Path, % Section, % Key, % A_Space
@@ -256,5 +256,5 @@ Hotkey_GetVar(VarName)  {
 	RegExMatch(VarName, "S)(.*:)?\s*(.*)", D)
 	GuiControlGet, Hwnd, % (D1 = "" ? "1:" : D1) "Hwnd", % D2
 	ControlGetText, Text,, ahk_id %Hwnd%
-	Return Hotkey_FormatStrToHK(Text)
+	Return Hotkey_StrToHK(Text)
 }
