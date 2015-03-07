@@ -1,5 +1,6 @@
 Hotkey_Init(Controls, Options = "")  {
 	Static IsStart
+	Local D1, D2, D, SaveFormat
 	SaveFormat := A_FormatInteger
 	SetFormat, IntegerFast, H
 	Loop, Parse, Controls, |
@@ -27,6 +28,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 		, Symbols := "|vkBA|vkBB|vkBC|vkBD|vkBE|vkBF|vkC0|vkDB|vkDC|vkDD|vkDE|vk41|vk42|"
 					. "vk43|vk44|vk45|vk46|vk47|vk48|vk49|vk4A|vk4B|vk4C|vk4D|vk4E|"
 					. "vk4F|vk50|vk51|vk52|vk53|vk54|vk55|vk56|vk57|vk58|vk59|vk5A|"
+	Local IsMod, WriteText
 
 	If Param1 = GetMod
 		Return MCtrl MAlt MShift MWin = "" ? 0 : 1
@@ -86,6 +88,7 @@ Hotkey_PressName:
 }
 
 Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
+	Local Name, SaveFormat
 	SaveFormat := A_FormatInteger
 	SetFormat, IntegerFast, H
 	Name := Hotkey_Arr(hwnd)
@@ -93,17 +96,18 @@ Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
 	(Name = "") ? Hotkey_Main("Control", 0) : Hotkey_Main("Control", hwnd, Name)
 }
 
-
 Hotkey_ExtKeyInit(Options)  {
+	Local SaveFormat, MouseKey
 	#IF Hotkey_Arr("Hook")
 	#IF Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
 	#IF Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
 	#IF
 	IfInString, Options, M
 	{
+		MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
 		Hotkey, IF, Hotkey_Arr("Hook")
-		For i, button in ["MButton","WheelDown","WheelUp","WheelRight","WheelLeft","XButton1","XButton2"]
-			Hotkey, %button%, Hotkey_PressName
+		Loop, Parse, MouseKey, |
+			Hotkey, %A_LoopField%, Hotkey_PressName
 	}
 	IfInString, Options, J
 	{
@@ -133,6 +137,7 @@ Hotkey_ExtKeyInit(Options)  {
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
 			,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}, SaveFormat
+	Local VkCode, SCCode, sc, IsMod
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
 	SaveFormat := A_FormatInteger
@@ -178,6 +183,7 @@ Hotkey_Arr(Key, Value="", Write=0)   {
 }
 
 Hotkey_IsRegControl()   {
+	Local Control
 	MouseGetPos,,,, Control, 2
 	Return Hotkey_Arr(Control) != ""
 }
@@ -202,11 +208,13 @@ Hotkey_RButton(RM)   {
 	; -------------------------------------- Format func --------------------------------------
 
 Hotkey_IniRead(Key, Section, Path) {
-	IniRead, Key, % Path, % Section, % Key, % A_Space
-	Return Hotkey_FormatHKToStr(Key)
+	Local Data
+	IniRead, Data, % Path, % Section, % Key, % A_Space
+	Return Hotkey_FormatHKToStr(Data)
 }
 
 Hotkey_FormatHKToStr(Key) {
+	Local K, K1, K2, KeyName
 	RegExMatch(Key, "S)^([\^\+!#]*)\{?(.*?)}?$", K)
 	If (K2 = "")
 		Return "Нет"
@@ -225,6 +233,7 @@ Hotkey_FormatStrToHK(Str) {
 		. ":H:|vk48| :I:|vk49| :J:|vk4A| :K:|vk4B| :L:|vk4C| :M:|vk4D| :N:|vk4E|"
 		. ":O:|vk4F| :P:|vk50| :Q:|vk51| :R:|vk52| :S:|vk53| :T:|vk54| :U:|vk55|"
 		. ":V:|vk56| :W:|vk57| :X:|vk58| :Y:|vk59| :Z:|vk5A|"
+	Local K, K1, K2, vk, vk1, vk2
 
 	If (Str = "Нет" || Str = "" || SubStr(Str, 0) ~= "\+|\s+")
 		Return ""
@@ -236,12 +245,14 @@ Hotkey_FormatStrToHK(Str) {
 }
 
 Hotkey_FormatHKToSend(Key, Section = "", Path = "") {
+	Local Data
 	If (Section != "")
-		IniRead, Key, % Path, % Section, % Key, % A_Space
-	Return RegExReplace(Key, "S)[^\^!\+#].*", "{$0}")
+		IniRead, Data, % Path, % Section, % Key, % A_Space
+	Return RegExReplace(Data, "S)[^\^!\+#].*", "{$0}")
 }
 
 Hotkey_GetVar(VarName)  {
+	Local D, D1, D2, Hwnd, Text
 	RegExMatch(VarName, "S)(.*:)?\s*(.*)", D)
 	GuiControlGet, Hwnd, % (D1 = "" ? "1:" : D1) "Hwnd", % D2
 	ControlGetText, Text,, ahk_id %Hwnd%
