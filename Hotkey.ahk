@@ -95,7 +95,6 @@ Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
 
 
 Hotkey_ExtKeyInit(Options)  {
-	MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
 	#IF Hotkey_Arr("Hook")
 	#IF Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
 	#IF Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
@@ -103,8 +102,8 @@ Hotkey_ExtKeyInit(Options)  {
 	IfInString, Options, M
 	{
 		Hotkey, IF, Hotkey_Arr("Hook")
-		Loop, Parse, MouseKey, |
-			Hotkey, %A_LoopField%, Hotkey_PressName
+		For i, button in ["MButton","WheelDown","WheelUp","WheelRight","WheelLeft","XButton1","XButton2"]
+			Hotkey, %button%, Hotkey_PressName
 	}
 	IfInString, Options, J
 	{
