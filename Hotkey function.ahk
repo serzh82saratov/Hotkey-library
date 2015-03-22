@@ -1,21 +1,20 @@
-Hotkey_Control(State)  {
+Hotkey_Control(State=1)  {
 	Static IsStart
 	If (!IsStart)
-		Hotkey_ExtKeyInit(), IsStart := 1
-	Hotkey_WindowsHookEx(State)
+		Hotkey_ExtKeyInit(State), IsStart := 1
+	Hotkey_WindowsHookEx(!!State)
 }
 
-Hotkey_Main(VKCode, SCCode, Option = 0, IsMod = 0)  {
+Hotkey_Main(VKCode, SCCode = 0, Option = 0, IsMod = 0)  {
+	Local sIsMod
 	Static K:={}, ModsOnly, Prefix := {"Alt":"!","Ctrl":"^","Shift":"+","Win":"#"}
 		, LRPrefix := {"LAlt":"<!","LCtrl":"<^","LShift":"<+","LWin":"<#"
 				,"RAlt":">!","RCtrl":">^","RShift":">+","RWin":">#"}
 		, VkMouse := {"MButton":"vk4","WheelDown":"vk9E","WheelUp":"vk9F","WheelRight":"vk9D"
-				,"WheelLeft":"vk9C","XButton1":"vk5","XButton2":"vk6"}
+				,"WheelLeft":"vk9C","XButton1":"vk5","XButton2":"vk6","LButton":"vk1","RButton":"vk2"}
 		, Symbols := "|vkBA|vkBB|vkBC|vkBD|vkBE|vkBF|vkC0|vkDB|vkDC|vkDD|vkDE|vk41|vk42|"
 				. "vk43|vk44|vk45|vk46|vk47|vk48|vk49|vk4A|vk4B|vk4C|vk4D|vk4E|"
 				. "vk4F|vk50|vk51|vk52|vk53|vk54|vk55|vk56|vk57|vk58|vk59|vk5A|"
-	Local sIsMod
-
 	If (Option = "Down")
 	{
 		If (K["M" IsMod] != "")
@@ -46,6 +45,8 @@ Hotkey_Main(VKCode, SCCode, Option = 0, IsMod = 0)  {
 		%Hotkey_TargetFunc%(K*)
 		Return ModsOnly := 0
 	}
+	Else If (VKCode = "GetMod")
+		Return K.PCtrl K.PAlt K.PShift K.PWin
 	K.VK := VKCode, K.SC := SCCode
 	K.Mods := K.MCtrl K.MAlt K.MShift K.MWin
 	K.LRMods := K.MLCtrl K.MRCtrl K.MLAlt K.MRAlt K.MLShift K.MRShift K.MLWin K.MRWin
@@ -70,17 +71,39 @@ Hotkey_PressName:
 	Return 1
 }
 
-Hotkey_ExtKeyInit()   {
-	Local MouseKey
-	MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
+Hotkey_ExtKeyInit(Options)   {
+	Local SaveFormat, MouseKey
 	#If Hotkey_Hook
+	#If Hotkey_Hook && !Hotkey_Main("GetMod")
+	#If Hotkey_Hook && Hotkey_Main("GetMod")
 	#If
-	Hotkey, If, Hotkey_Hook
-	Loop, Parse, MouseKey, |
-		Hotkey, %A_LoopField%, Hotkey_PressName, P3 UseErrorLevel
-	Loop 128
-		Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName, P3 UseErrorLevel
-	Hotkey, If
+	IfInString, Options, M
+	{
+		MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
+		Hotkey, IF, Hotkey_Hook
+		Loop, Parse, MouseKey, |
+			Hotkey, %A_LoopField%, Hotkey_PressName
+	}
+	IfInString, Options, L
+	{
+		Hotkey, IF, Hotkey_Hook && Hotkey_Main("GetMod")
+		Hotkey, LButton, Hotkey_PressName
+	}
+	IfInString, Options, R
+	{
+		Hotkey, IF, Hotkey_Hook
+		Hotkey, RButton, Hotkey_PressName
+	}
+	IfInString, Options, J
+	{
+		SaveFormat := A_FormatInteger
+		SetFormat, IntegerFast, D
+		Hotkey, IF, Hotkey_Hook && !Hotkey_Main("GetMod")
+		Loop, 128
+			Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName
+		SetFormat, IntegerFast, %SaveFormat%
+	}
+	Hotkey, IF
 }
 
 Hotkey_Reset()   {
