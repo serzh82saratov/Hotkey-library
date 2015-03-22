@@ -113,10 +113,9 @@ Hotkey_Reset()   {
     ;  http://forum.script-coding.com/viewtopic.php?id=6350
 
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)   {
+	Local VkCode, SCCode, sc, IsMod
 	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
 		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}, SaveFormat
-	Local VkCode, SCCode, sc, IsMod
-
 	If !Hotkey_Hook
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
 	SaveFormat := A_FormatInteger
