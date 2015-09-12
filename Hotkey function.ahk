@@ -47,7 +47,7 @@ Hotkey_Main(In)  {
 		K.PLCtrl := K.PLAlt := K.PLShift := K.PLWin := K.LRPref := ""
 		K.MRCtrl := K.MRAlt := K.MRShift := K.MRWin := ""
 		K.MLCtrl := K.MLAlt := K.MLShift := K.MLWin := K.LRMods := ""
-		Func(Hotkey_Arr("Func") "").Call(K)
+		Func(Hotkey_Arr("Func")).Call(K)
 		Return ModsOnly := 0
 	}
 	Else If (In.Opt = "GetMod")
@@ -64,7 +64,7 @@ Hotkey_Main(In)  {
 	, K.Pref := K.PCtrl K.PAlt K.PShift K.PWin
 	, K.LRPref := K.PLCtrl K.PRCtrl K.PLAlt K.PRAlt K.PLShift K.PRShift K.PLWin K.PRWin
 	, ModsOnly := 0)
-	Func(Hotkey_Arr("Func") "").Call(K)
+	Func(Hotkey_Arr("Func")).Call(K)
 	Return 1
 
 Hotkey_PressName:
@@ -74,7 +74,7 @@ Hotkey_PressName:
 	K.LRPref := K.PLCtrl K.PRCtrl K.PLAlt K.PRAlt K.PLShift K.PRShift K.PLWin K.PRWin
 	K.HK := K.Name := K.TK := A_ThisHotkey, ModsOnly := 0, K.SC := "", K.NFP := 0
 	K.VK := !InStr(A_ThisHotkey, "Joy") ? VkMouse[A_ThisHotkey] : ""
-	Func(Hotkey_Arr("Func") "").Call(K)
+	Func(Hotkey_Arr("Func")).Call(K)
 	Return 1
 }
 
