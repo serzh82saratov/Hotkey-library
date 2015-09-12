@@ -140,13 +140,13 @@ Hotkey_ExtKeyInit(Options) {
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
 		,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}
-		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
-	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Size
+		, oMem := [], HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod
 	Critical
 
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
-	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size := 16, Ptr)
+	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size, Ptr)
 	DllCall("RtlMoveMemory", Ptr, pHeap, Ptr, lParam, Ptr, Size), oMem.Push([wParam, pHeap])
 	SetTimer, Hotkey_LLKPWork, -10
 	Return nCode < 0 ? DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam) : 1
