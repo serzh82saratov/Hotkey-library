@@ -123,7 +123,7 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
 		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}
 		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
-	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP, Size
 	Critical
 
 	If !Hotkey_Hook
