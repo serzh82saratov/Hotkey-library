@@ -159,13 +159,10 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 			Ext := NumGet(Lp + 0, 8, "UInt")
 			SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
 			IsMod := Mods[VK]
-			If Hotkey_Arr("Hook")
-			{
-				If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
-					(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
-				Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
-					(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
-			}
+			If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
+				(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
+			Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
+				(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
 			DllCall("HeapFree", Ptr, hHeap, UInt, 0, Ptr, Lp)
 			oMem.RemoveAt(1)
 		}
