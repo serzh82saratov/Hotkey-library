@@ -79,7 +79,7 @@ Hotkey_PressName:
 }
 
 Hotkey_ExtKeyInit(Options)   {
-	Local SaveFormat, MouseKey
+	Local S_FormatInteger, MouseKey
 	#If Hotkey_Hook
 	#If Hotkey_Hook && !Hotkey_Main({Opt:"GetMod"})
 	#If Hotkey_Hook && Hotkey_Main({Opt:"GetMod"})
@@ -103,12 +103,12 @@ Hotkey_ExtKeyInit(Options)   {
 	}
 	IfInString, Options, J
 	{
-		SaveFormat := A_FormatInteger
+		S_FormatInteger := A_FormatInteger
 		SetFormat, IntegerFast, D
 		Hotkey, IF, Hotkey_Hook && !Hotkey_Main({Opt:"GetMod"})
 		Loop, 128
 			Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName
-		SetFormat, IntegerFast, %SaveFormat%
+		SetFormat, IntegerFast, %S_FormatInteger%
 	}
 	Hotkey, IF
 }
