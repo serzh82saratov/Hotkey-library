@@ -1,3 +1,4 @@
+
 	;  http://forum.script-coding.com/viewtopic.php?pid=69765#p69765
 
 Hotkey_Control(State=1)  {
@@ -135,18 +136,21 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Hotkey_LLKPWork:
 		While (oMem[1] != "")
 		{
-			Wp := oMem[1][1], Lp := oMem[1][2]
-			VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
-			Ext := NumGet(Lp + 0, 8, "UInt")
-			SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
-			NFP := Ext & 16			;  Не физическое нажатие
-			Time := NumGet(Lp + 12, "UInt")
-			IsMod := Mods[VK]
-			If Hotkey_Hook && (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
-				IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Down", IsMod:IsMod, NFP:NFP, Time:Time})
-				: Hotkey_Main({VK:VK, SC:SC, NFP:NFP, Time:Time})
-			Else If Hotkey_Hook && (Wp = 0x101 || Wp = 0x105)		;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105
-				IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Up", IsMod:IsMod, NFP:NFP, Time:Time}) : 0
+			If Hotkey_Hook
+			{
+				Wp := oMem[1][1], Lp := oMem[1][2]
+				VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
+				Ext := NumGet(Lp + 0, 8, "UInt")
+				SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
+				NFP := Ext & 16			;  Не физическое нажатие
+				Time := NumGet(Lp + 12, "UInt")
+				IsMod := Mods[VK]
+				If Hotkey_Hook && (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
+					IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Down", IsMod:IsMod, NFP:NFP, Time:Time})
+					: Hotkey_Main({VK:VK, SC:SC, NFP:NFP, Time:Time})
+				Else If Hotkey_Hook && (Wp = 0x101 || Wp = 0x105)		;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105
+					IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Up", IsMod:IsMod, NFP:NFP, Time:Time}) : 0
+			}
 			DllCall("HeapFree", Ptr, hHeap, UInt, 0, Ptr, Lp)
 			oMem.RemoveAt(1)
 		}
