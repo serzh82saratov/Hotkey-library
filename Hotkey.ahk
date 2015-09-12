@@ -1,7 +1,10 @@
+
+ ; http://forum.script-coding.com/viewtopic.php?id=8343
+
 Hotkey_Init(Controls, Options = "")  {
 	Static IsStart
-	Local D1, D2, D, SaveFormat, IsFocus, FocusHwnd, Hwnd
-	SaveFormat := A_FormatInteger
+	Local D1, D2, D, S_FormatInteger, IsFocus, FocusHwnd, Hwnd
+	S_FormatInteger := A_FormatInteger
 	SetFormat, IntegerFast, H
 	Loop, Parse, Controls, |
 	{
@@ -10,7 +13,7 @@ Hotkey_Init(Controls, Options = "")  {
 		Hotkey_Arr(Hwnd, D2, 1)
 		GuiControl, %D1%+ReadOnly, %D2%
 	}
-	SetFormat, IntegerFast, %SaveFormat%
+	SetFormat, IntegerFast, %S_FormatInteger%
 	If !IsStart
 		Hotkey_SetWinEventHook(0x8005, 0x8005, 0, RegisterCallback("Hotkey_WinEvent", "F"), 0, 0, 0)   ;  EVENT_OBJECT_FOCUS := 0x8005
 		, Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx(), 1), IsStart := 1
@@ -136,21 +139,37 @@ Hotkey_ExtKeyInit(Options)  {
 
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
-			,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}, SaveFormat
-	Local VkCode, SCCode, sc, IsMod
+		,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}
+		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod
+	Critical
+
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
-	SaveFormat := A_FormatInteger
-	SetFormat, IntegerFast, H
-	VkCode := "vk" SubStr(NumGet(lParam+0, 0, "UInt"), 3)
-		sc := NumGet(lParam+0, 8, "UInt") & 1, sc := sc << 8 | NumGet(lParam+0, 4, "UInt")
-	SCCode := "sc" SubStr(sc, 3)
-	SetFormat, IntegerFast, %SaveFormat%
-	IF (wParam = 0x100 || wParam = 0x104)   ;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
-		(IsMod := Mods[VkCode]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VkCode, SCCode)
-	Else IF ((wParam = 0x101 || wParam = 0x105) && VkCode != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
-		nCode := -1, (IsMod := Mods[VkCode]) ? Hotkey_Main("ModUp", IsMod) : 0
+	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size := 16, Ptr)
+	DllCall("RtlMoveMemory", Ptr, pHeap, Ptr, lParam, Ptr, Size), oMem.Push([wParam, pHeap])
+	SetTimer, Hotkey_LLKPWork, -10
 	Return nCode < 0 ? DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam) : 1
+
+	Hotkey_LLKPWork:
+		While (oMem[1] != "")
+		{
+			Wp := oMem[1][1], Lp := oMem[1][2]
+			VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
+			Ext := NumGet(Lp + 0, 8, "UInt")
+			SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
+			IsMod := Mods[VK]
+			If Hotkey_Arr("Hook")
+			{
+				If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
+					(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
+				Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
+					(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
+			}
+			DllCall("HeapFree", Ptr, hHeap, UInt, 0, Ptr, Lp)
+			oMem.RemoveAt(1)
+		}
+		Return
 }
 
 Hotkey_SetWinEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, idThread, dwFlags) {
@@ -207,11 +226,9 @@ Hotkey_RButton(RM)   {
 
 	; -------------------------------------- Format func --------------------------------------
 
-Hotkey_IniRead(Key, Section, Path, SetVar = 0) {
+Hotkey_IniRead(Key, Section, Path) {
 	Local Data
 	IniRead, Data, % Path, % Section, % Key, % A_Space
-	If SetVar
-		Hotkey_SetVarName(Key, Data)
 	Return Hotkey_HKToStr(Data)
 }
 
