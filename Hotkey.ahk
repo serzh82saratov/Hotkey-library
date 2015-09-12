@@ -154,15 +154,18 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Hotkey_LLKPWork:
 		While (oMem[1] != "")
 		{
-			Wp := oMem[1][1], Lp := oMem[1][2]
-			VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
-			Ext := NumGet(Lp + 0, 8, "UInt")
-			SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
-			IsMod := Mods[VK]
-			If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
-				(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
-			Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
-				(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
+			IF Hotkey_Arr("Hook")
+			{
+				Wp := oMem[1][1], Lp := oMem[1][2]
+				VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
+				Ext := NumGet(Lp + 0, 8, "UInt")
+				SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
+				IsMod := Mods[VK]
+				If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
+					(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
+				Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
+					(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
+			}
 			DllCall("HeapFree", Ptr, hHeap, UInt, 0, Ptr, Lp)
 			oMem.RemoveAt(1)
 		}
