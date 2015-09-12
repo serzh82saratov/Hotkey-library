@@ -141,7 +141,7 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
 		,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}
 		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
-	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Size
 	Critical
 
 	If !Hotkey_Arr("Hook")
