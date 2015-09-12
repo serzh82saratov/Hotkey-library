@@ -1,7 +1,7 @@
 
 	;  http://forum.script-coding.com/viewtopic.php?id=8343
 
-Hotkey_Init(Controls, Options = "")  {
+Hotkey_Init(Controls, Options = "") {
 	Static IsStart
 	Local D1, D2, D, S_FormatInteger, IsFocus, FocusHwnd, Hwnd
 	S_FormatInteger := A_FormatInteger
@@ -10,13 +10,13 @@ Hotkey_Init(Controls, Options = "")  {
 	{
 		RegExMatch(A_LoopField, "S)(.*:)?\s*(.*)", D)
 		GuiControlGet, Hwnd, % (D1 = "" ? "1:" : D1) "Hwnd", %D2%
-		Hotkey_Arr(Hwnd, D2, 1)
+		Hotkey_Arr(Hwnd, D2)
 		GuiControl, %D1%+ReadOnly, %D2%
 	}
 	SetFormat, IntegerFast, %S_FormatInteger%
 	If !IsStart
 		Hotkey_SetWinEventHook(0x8005, 0x8005, 0, RegisterCallback("Hotkey_WinEvent", "F"), 0, 0, 0)   ;  EVENT_OBJECT_FOCUS := 0x8005
-		, Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx(), 1), IsStart := 1
+		, Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx()), IsStart := 1
 	ControlGetFocus, IsFocus, A
 	ControlGet, FocusHwnd, Hwnd,, %IsFocus%, A
 	If Hotkey_Arr(FocusHwnd)
@@ -43,13 +43,13 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
 			OnlyMods := 0, ControlHandle := Param2, VarName := Param3
 			If !Hotkey_Arr("Hook")
-				Hotkey_Arr("Hook", 1, 1)
+				Hotkey_Arr("Hook", 1)
 			SendInput {LButton Up}
 			PostMessage, 0x00B1, , , , ahk_id %ControlHandle%   ;  EM_SETSEL
 		}
 		Else If Hotkey_Arr("Hook")
 		{
-			Hotkey_Arr("Hook", 0, 1)
+			Hotkey_Arr("Hook", 0)
 			MCtrl := MAlt := MShift := MWin := ""
 			PCtrl := PAlt := PShift := PWin := Prefix := ""
 			If OnlyMods
@@ -90,7 +90,7 @@ Hotkey_PressName:
 	Return
 }
 
-Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
+Hotkey_WinEvent(hWinEventHook, event, hwnd) {
 	Local Name, S_FormatInteger
 	S_FormatInteger := A_FormatInteger
 	SetFormat, IntegerFast, H
@@ -99,7 +99,7 @@ Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
 	(Name = "") ? Hotkey_Main("Control", 0) : Hotkey_Main("Control", hwnd, Name)
 }
 
-Hotkey_ExtKeyInit(Options)  {
+Hotkey_ExtKeyInit(Options) {
 	Local S_FormatInteger, MouseKey
 	#IF Hotkey_Arr("Hook")
 	#IF Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
@@ -137,7 +137,7 @@ Hotkey_ExtKeyInit(Options)  {
 	Hotkey, IF
 }
 
-Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
+Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
 		,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}
 		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
@@ -177,7 +177,7 @@ Hotkey_SetWinEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, i
 			, "Ptr", lpfnWinEventProc, "UInt", idProcess, "UInt", idThread, "UInt", dwFlags, "Ptr")
 }
 
-Hotkey_SetWindowsHookEx()   {
+Hotkey_SetWindowsHookEx() {
 	Return DllCall("SetWindowsHookEx" . (A_IsUnicode ? "W" : "A")
 		, "Int", 13   ;  WH_KEYBOARD_LL := 13
 		, "Ptr", RegisterCallback("Hotkey_LowLevelKeyboardProc", "Fast")
@@ -185,7 +185,7 @@ Hotkey_SetWindowsHookEx()   {
 		, "UInt", 0, "Ptr")
 }
 
-Hotkey_Exit()  {
+Hotkey_Exit() {
 	DllCall("UnhookWindowsHookEx", "Ptr", Hotkey_Arr("hHook"))
 }
 
@@ -194,20 +194,18 @@ Hotkey_SetVarName(Name, Value) {
 	%Name% := Value
 }
 
-Hotkey_Arr(Key, Value="", Write=0)   {
+Hotkey_Arr(P*) {
 	Static Arr := {TipNo:"Нет"}
-	If !Write
-		Return Arr[Key]
-	Arr[Key] := Value
+	Return P.MaxIndex() = 1 ? Arr[P[1]] : (Arr[P[1]] := P[2])
 }
 
-Hotkey_IsRegControl()   {
+Hotkey_IsRegControl() {
 	Local Control
 	MouseGetPos,,,, Control, 2
 	Return Hotkey_Arr(Control) != ""
 }
 
-Hotkey_RButton(RM)   {
+Hotkey_RButton(RM) {
 	#IF Hotkey_IsRegControl()
 	#IF !Hotkey_Arr("Hook") && Hotkey_IsRegControl()
 	#IF
