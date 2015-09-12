@@ -223,9 +223,11 @@ Hotkey_RButton(RM)   {
 
 	; -------------------------------------- Format func --------------------------------------
 
-Hotkey_IniRead(Key, Section, Path) {
+Hotkey_IniRead(Key, Section, Path, SetVar = 0) {
 	Local Data
 	IniRead, Data, % Path, % Section, % Key, % A_Space
+	If SetVar
+		Hotkey_SetVarName(Key, Data)
 	Return Hotkey_HKToStr(Data)
 }
 
