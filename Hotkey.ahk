@@ -1,5 +1,5 @@
 
- ; http://forum.script-coding.com/viewtopic.php?id=8343
+	;  http://forum.script-coding.com/viewtopic.php?id=8343
 
 Hotkey_Init(Controls, Options = "")  {
 	Static IsStart
@@ -40,7 +40,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 		If Param2
 		{
 			If OnlyMods
-				SendMessage, 0xC, 0, "Нет", , ahk_id %ControlHandle%
+				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
 			OnlyMods := 0, ControlHandle := Param2, VarName := Param3
 			If !Hotkey_Arr("Hook")
 				Hotkey_Arr("Hook", 1, 1)
@@ -53,7 +53,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 			MCtrl := MAlt := MShift := MWin := ""
 			PCtrl := PAlt := PShift := PWin := Prefix := ""
 			If OnlyMods
-				SendMessage, 0xC, 0, "Нет", , ahk_id %ControlHandle%
+				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
 		}
 		Return
 	}
@@ -76,7 +76,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 	,  KeyName := Hotkey = "vkBF" ? "/" : KeyName
 	,  Prefix := PCtrl PAlt PShift PWin, OnlyMods := 0)
 	Hotkey_SetVarName(VarName, Prefix Hotkey)
-	WriteText := MCtrl MAlt MShift MWin KeyName = "" ? "Нет" : MCtrl MAlt MShift MWin KeyName
+	WriteText := MCtrl MAlt MShift MWin KeyName = "" ? Hotkey_Arr("TipNo") : MCtrl MAlt MShift MWin KeyName
 	SendMessage, 0xC, 0, &WriteText, , ahk_id %ControlHandle%
 	Return 1
 
@@ -91,16 +91,16 @@ Hotkey_PressName:
 }
 
 Hotkey_WinEvent(hWinEventHook, event, hwnd)   {
-	Local Name, SaveFormat
-	SaveFormat := A_FormatInteger
+	Local Name, S_FormatInteger
+	S_FormatInteger := A_FormatInteger
 	SetFormat, IntegerFast, H
 	Name := Hotkey_Arr(hwnd)
-	SetFormat, IntegerFast, %SaveFormat%
+	SetFormat, IntegerFast, %S_FormatInteger%
 	(Name = "") ? Hotkey_Main("Control", 0) : Hotkey_Main("Control", hwnd, Name)
 }
 
 Hotkey_ExtKeyInit(Options)  {
-	Local SaveFormat, MouseKey
+	Local S_FormatInteger, MouseKey
 	#IF Hotkey_Arr("Hook")
 	#IF Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
 	#IF Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
@@ -114,12 +114,12 @@ Hotkey_ExtKeyInit(Options)  {
 	}
 	IfInString, Options, J
 	{
-		SaveFormat := A_FormatInteger
+		S_FormatInteger := A_FormatInteger
 		SetFormat, IntegerFast, D
 		Hotkey, IF, Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
 		Loop, 128
 			Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName
-		SetFormat, IntegerFast, %SaveFormat%
+		SetFormat, IntegerFast, %S_FormatInteger%
 	}
 	IfInString, Options, L
 	{
@@ -195,7 +195,7 @@ Hotkey_SetVarName(Name, Value) {
 }
 
 Hotkey_Arr(Key, Value="", Write=0)   {
-	Static Arr := {}
+	Static Arr := {TipNo:"Нет"}
 	If !Write
 		Return Arr[Key]
 	Arr[Key] := Value
@@ -236,7 +236,7 @@ Hotkey_HKToStr(Key) {
 	Local K, K1, K2, KeyName
 	RegExMatch(Key, "S)^([\^\+!#]*)\{?(.*?)}?$", K)
 	If (K2 = "")
-		Return "Нет"
+		Return "" Hotkey_Arr("TipNo")
 	If InStr(K2, "vk")
 		KeyName := K2 = "vkBF" ? "/" : GetKeyName(K2)
 	Else
@@ -254,7 +254,7 @@ Hotkey_StrToHK(Str) {
 		. ":V:|vk56| :W:|vk57| :X:|vk58| :Y:|vk59| :Z:|vk5A|"
 	Local K, K1, K2, vk, vk1, vk2
 
-	If (Str = "Нет" || Str = "" || SubStr(Str, 0) ~= "\+|\s+")
+	If (Str = Hotkey_Arr("TipNo") || Str = "" || SubStr(Str, 0) ~= "\+|\s+")
 		Return ""
 	RegExMatch(Str, "S)(.*\+)?(.*)", K)
 	If (StrLen(K2) = 1)
