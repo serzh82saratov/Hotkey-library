@@ -127,13 +127,13 @@ Hotkey_Reset()  {
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam)  {
 	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
 		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}
-		, oMem := [], HEAP_ZERO_MEMORY := 0x8, hHeap := DllCall("GetProcessHeap", Ptr)
-	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP, Size
+		, oMem := [], HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP
 	Critical
-
+	
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
-	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size := 16, Ptr)
+	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size, Ptr)
 	DllCall("RtlMoveMemory", Ptr, pHeap, Ptr, lParam, Ptr, Size), oMem.Push([wParam, pHeap])
 	SetTimer, Hotkey_LLKPWork, -10
 	Return nCode < 0 ? DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam) : 1
