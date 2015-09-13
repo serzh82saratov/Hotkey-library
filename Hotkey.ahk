@@ -44,8 +44,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 			OnlyMods := 0, ControlHandle := Param2, VarName := Param3
 			If !Hotkey_Arr("Hook")
 				Hotkey_Arr("Hook", 1)
-			SendInput {LButton Up}
-			PostMessage, 0x00B1, , , , ahk_id %ControlHandle%   ;  EM_SETSEL
+			PostMessage, 0x00B1, -1, -1, , ahk_id %ControlHandle%   ;  EM_SETSEL
 		}
 		Else If Hotkey_Arr("Hook")
 		{
