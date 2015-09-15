@@ -21,6 +21,7 @@ Hotkey_Init(Controls, Options = "") {
 	ControlGet, FocusHwnd, Hwnd,, %IsFocus%, A
 	If Hotkey_Arr(FocusHwnd)
 		Hotkey_WinEvent(0, 0, FocusHwnd)
+	Hotkey_RButton()
 	Return
 }
 
@@ -43,7 +44,7 @@ Hotkey_Main(Param1, Param2=0, Param3=0) {
 				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
 			OnlyMods := 0, ControlHandle := Param2, VarName := Param3
 			If !Hotkey_Arr("Hook")
-				Hotkey_Arr("Hook", 1)
+				Hotkey_Arr("Hook", 1) 
 			PostMessage, 0x00B1, -1, -1, , ahk_id %ControlHandle%   ;  EM_SETSEL
 		}
 		Else If Hotkey_Arr("Hook")
@@ -129,10 +130,8 @@ Hotkey_ExtKeyInit(Options) {
 	{
 		Hotkey, IF, Hotkey_Arr("Hook")
 		Hotkey, RButton, Hotkey_PressName
-		Hotkey_RButton(1)
+		Hotkey_Arr("SetRButton", 1)
 	}
-	Else
-		Hotkey_RButton(0)
 	Hotkey, IF
 }
 
@@ -204,14 +203,12 @@ Hotkey_IsRegControl() {
 	Return Hotkey_Arr(Control) != ""
 }
 
-Hotkey_RButton(RM) {
+Hotkey_RButton() {
+	If Hotkey_Arr("SetRButton")
+		Return
 	#IF Hotkey_IsRegControl()
-	#IF !Hotkey_Arr("Hook") && Hotkey_IsRegControl()
 	#IF
-	If RM
-		Hotkey, IF, !Hotkey_Arr("Hook") && Hotkey_IsRegControl()
-	Else
-		Hotkey, IF, Hotkey_IsRegControl()
+	Hotkey, IF, Hotkey_IsRegControl()
 	Hotkey, RButton Up, Hotkey_RButton
 	Hotkey, IF
 	Return
