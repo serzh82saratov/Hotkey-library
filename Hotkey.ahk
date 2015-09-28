@@ -22,6 +22,7 @@ Hotkey_Init(Controls, Options = "") {
 	If Hotkey_Arr(FocusHwnd)
 		Hotkey_WinEvent(0, 0, FocusHwnd)
 	Hotkey_RButton()
+	#HotkeyInterval 0
 	Return
 }
 
