@@ -6,6 +6,7 @@ Hotkey_Control(State=1)  {
 	If (!IsStart)
 		Hotkey_ExtKeyInit(State), IsStart := 1
 	Hotkey_WindowsHookEx(!!State)
+	#HotkeyInterval 0
 }
 
 Hotkey_Main(In)  {
