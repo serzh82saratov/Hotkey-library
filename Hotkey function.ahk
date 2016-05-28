@@ -20,7 +20,7 @@ Hotkey_Main(In)  {
 				. "vk4F|vk50|vk51|vk52|vk53|vk54|vk55|vk56|vk57|vk58|vk59|vk5A|"
 	Local IsMod, sIsMod
 
-	IsMod := In.IsMod
+	IsMod := In.IsMod, K.ModUp := 0
 	If (In.Opt = "Down")
 	{
 		If (K["M" IsMod] != "")
@@ -32,7 +32,7 @@ Hotkey_Main(In)  {
 	Else If (In.Opt = "Up")
 	{
 		sIsMod := SubStr(IsMod, 2)
-		K["M" IsMod] := K["P" IsMod] := ""
+		K.ModUp := 1, K["M" IsMod] := K["P" IsMod] := ""
 		If (K["ML" sIsMod] = "" && K["MR" sIsMod] = "")
 			K["M" sIsMod] := K["P" sIsMod] := ""
 		If (K.HK != "")
