@@ -99,7 +99,7 @@ Hotkey_ExtKeyInit(Options)   {
 	}
 	IfInString, Options, R
 	{
-		Hotkey, IF, Hotkey_Arr("Hook") && Hotkey_Main({Opt:"GetMod"})
+		Hotkey, IF, Hotkey_Arr("Hook")
 		Hotkey, RButton, Hotkey_PressName
 	}
 	IfInString, Options, J
