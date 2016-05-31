@@ -9,21 +9,19 @@ Hotkey_Init(Func, Options = "") {
 	Hotkey_Arr("Hook") ? (Hotkey_Hook(0), Hotkey_Hook(1)) : 0
 }
 
-Hotkey_Main(In)  {
+Hotkey_Main(In) {
 	Static Prefix := {"LAlt":"<!","LCtrl":"<^","LShift":"<+","LWin":"<#"
 		,"RAlt":">!","RCtrl":">^","RShift":">+","RWin":">#"}, K:={}, ModsOnly
 	Local IsMod, sIsMod
 	IsMod := In.IsMod
-	If (In.Opt = "Down")
-	{
+	If (In.Opt = "Down") {
 		If (K["M" IsMod] != "")
 			Return 1
 		sIsMod := SubStr(IsMod, 2)
 		K["M" sIsMod] := sIsMod "+", K["P" sIsMod] := SubStr(Prefix[IsMod], 2)
 		K["M" IsMod] := IsMod "+", K["P" IsMod] := Prefix[IsMod]
 	}
-	Else If (In.Opt = "Up")
-	{
+	Else If (In.Opt = "Up") {
 		sIsMod := SubStr(IsMod, 2)
 		K.ModUp := 1, K["M" IsMod] := K["P" IsMod] := ""
 		If (K["ML" sIsMod] = "" && K["MR" sIsMod] = "")
@@ -31,8 +29,7 @@ Hotkey_Main(In)  {
 		If (!Hotkey_Arr("Up") && K.HK != "")
 			Return 1
 	}
-	Else If (In.Opt = "OnlyMods")
-	{
+	Else If (In.Opt = "OnlyMods") {
 		If !ModsOnly
 			Return 0
 		K.MCtrl := K.MAlt := K.MShift := K.MWin := K.Mods := ""
@@ -89,11 +86,9 @@ Hotkey_MouseAndJoyInit(Options) {
 	Option := InStr(Options, "L") ? "On" : "Off"
 	Hotkey, IF, Hotkey_Arr("Hook") && Hotkey_Main({Opt:"GetMod"})
 	Hotkey, LButton, Hotkey_PressMouse, % Option
-
 	Option := InStr(Options, "R") ? "On" : "Off"
 	Hotkey, IF, Hotkey_Arr("Hook")
 	Hotkey, RButton, Hotkey_PressMouse, % Option
-
 	Option := InStr(Options, "J") ? "On" : "Off"
 	S_FormatInteger := A_FormatInteger
 	SetFormat, IntegerFast, D
@@ -122,7 +117,6 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 		, oMem := [], HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
 	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP
 	Critical
-
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
 	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size, Ptr)
@@ -131,10 +125,8 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 	Return nCode < 0 ? DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam) : 1
 
 	Hotkey_HookProcWork:
-		While (oMem[1] != "")
-		{
-			If Hotkey_Arr("Hook")
-			{
+		While (oMem[1] != "") {
+			If Hotkey_Arr("Hook") {
 				Wp := oMem[1][1], Lp := oMem[1][2]
 				VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
 				Ext := NumGet(Lp + 0, 8, "UInt")
