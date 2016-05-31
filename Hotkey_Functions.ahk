@@ -5,8 +5,8 @@ Hotkey_Init(Func, Options = "") {
 	Hotkey_Arr("Func", Func)
 	Hotkey_Arr("Up", !!InStr(Options, "U"))
 	Hotkey_MouseAndJoyInit(Options)
-	OnExit("Hotkey_SetHook")
-	Hotkey_SetHook()
+	OnExit("Hotkey_SetHook"), Hotkey_SetHook()
+	Hotkey_Arr("Hook") ? (Hotkey_Hook(0), Hotkey_Hook(1)) : 0
 }
 
 Hotkey_Main(In)  {
@@ -156,12 +156,13 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 }
 
 Hotkey_SetHook(On = 1) {
-	Static Hook
-	DllCall("UnhookWindowsHookEx", "Ptr", Hook), Hook := "", Hotkey_Hook(0)
-	If (On = 1)
-		Hook := DllCall("SetWindowsHookEx" . (A_IsUnicode ? "W" : "A")
+	Static hHook
+	If (On = 1 && !hHook)
+		hHook := DllCall("SetWindowsHookEx" . (A_IsUnicode ? "W" : "A")
 				, "Int", 13   ;  WH_KEYBOARD_LL
 				, "Ptr", RegisterCallback("Hotkey_LowLevelKeyboardProc", "Fast")
 				, "Ptr", DllCall("GetModuleHandle", "UInt", 0, "Ptr")
 				, "UInt", 0, "Ptr")
+	Else If (On != 1)
+		DllCall("UnhookWindowsHookEx", "Ptr", hHook), hHook := "", Hotkey_Hook(0)
 }
