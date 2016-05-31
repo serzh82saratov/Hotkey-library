@@ -1,169 +1,153 @@
+	;  http://forum.script-coding.com/viewtopic.php?pid=69765#p69765
 
-	;  http://forum.script-coding.com/viewtopic.php?pid=97390#p97390
-
-Hotkey_Init(Controls, Options = "") {
-	Static IsStart
-	Local D1, D2, D, S_FormatInteger, IsFocus, FocusHwnd, Hwnd
-	S_FormatInteger := A_FormatInteger
-	SetFormat, IntegerFast, H
-	Loop, Parse, Controls, |
-	{
-		RegExMatch(A_LoopField, "S)(.*:)?\s*(.*)", D)
-		GuiControlGet, Hwnd, % (D1 = "" ? "1:" : D1) "Hwnd", %D2%
-		Hotkey_Arr(Hwnd, D2)
-		GuiControl, %D1%+ReadOnly, %D2%
-	}
-	SetFormat, IntegerFast, %S_FormatInteger%
-	If !IsStart
-		Hotkey_SetWinEventHook(0x8005, 0x8005, 0, RegisterCallback("Hotkey_WinEvent", "F"), 0, 0, 0)   ;  EVENT_OBJECT_FOCUS := 0x8005
-		, Hotkey_ExtKeyInit(Options), Hotkey_Arr("hHook", Hotkey_SetWindowsHookEx()), IsStart := 1
-	ControlGetFocus, IsFocus, A
-	ControlGet, FocusHwnd, Hwnd,, %IsFocus%, A
-	If Hotkey_Arr(FocusHwnd)
-		Hotkey_WinEvent(0, 0, FocusHwnd)
-	Hotkey_RButton()
+Hotkey_Init(Func, Options = "") {
 	#HotkeyInterval 0
-	Return
+	Hotkey_Arr("Func", Func)
+	Hotkey_Arr("Up", !!InStr(Options, "U"))
+	Hotkey_MouseAndJoyInit(Options)
+	OnExit("Hotkey_SetHook")
+	Hotkey_SetHook()
 }
 
-Hotkey_Main(Param1, Param2=0, Param3=0) {
-	Static OnlyMods, VarName, ControlHandle, Hotkey, KeyName
-		, MCtrl, MAlt, MShift, MWin, PCtrl, PAlt, PShift, PWin, Prefix
-		, Pref := {"Alt":"!","Ctrl":"^","Shift":"+","Win":"#"}
-		, Symbols := "|vkBA|vkBB|vkBC|vkBD|vkBE|vkBF|vkC0|vkDB|vkDC|vkDD|vkDE|vk41|vk42|"
-					. "vk43|vk44|vk45|vk46|vk47|vk48|vk49|vk4A|vk4B|vk4C|vk4D|vk4E|"
-					. "vk4F|vk50|vk51|vk52|vk53|vk54|vk55|vk56|vk57|vk58|vk59|vk5A|"
-	Local IsMod, WriteText
-
-	If Param1 = GetMod
-		Return MCtrl MAlt MShift MWin = "" ? 0 : 1
-	If Param1 = Control
+Hotkey_Main(In)  {
+	Static Prefix := {"LAlt":"<!","LCtrl":"<^","LShift":"<+","LWin":"<#"
+		,"RAlt":">!","RCtrl":">^","RShift":">+","RWin":">#"}, K:={}, ModsOnly
+	Local IsMod, sIsMod
+	IsMod := In.IsMod
+	If (In.Opt = "Down")
 	{
-		If Param2
-		{
-			If OnlyMods
-				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
-			OnlyMods := 0, ControlHandle := Param2, VarName := Param3
-			If !Hotkey_Arr("Hook")
-				Hotkey_Arr("Hook", 1) 
-			PostMessage, 0x00B1, -1, -1, , ahk_id %ControlHandle%   ;  EM_SETSEL
-		}
-		Else If Hotkey_Arr("Hook")
-		{
-			Hotkey_Arr("Hook", 0)
-			MCtrl := MAlt := MShift := MWin := ""
-			PCtrl := PAlt := PShift := PWin := Prefix := ""
-			If OnlyMods
-				SendMessage, 0xC, 0, "" Hotkey_Arr("TipNo"), , ahk_id %ControlHandle%
-		}
-		Return
-	}
-	If Param1 = Mod
-	{
-		IsMod := Param2
-		If (M%IsMod% != "")
+		If (K["M" IsMod] != "")
 			Return 1
-		M%IsMod% := IsMod "+", P%IsMod% := Pref[IsMod]
+		sIsMod := SubStr(IsMod, 2)
+		K["M" sIsMod] := sIsMod "+", K["P" sIsMod] := SubStr(Prefix[IsMod], 2)
+		K["M" IsMod] := IsMod "+", K["P" IsMod] := Prefix[IsMod]
 	}
-	Else If Param1 = ModUp
+	Else If (In.Opt = "Up")
 	{
-		IsMod := Param2, M%IsMod% := P%IsMod% := ""
-		If (Hotkey != "")
+		sIsMod := SubStr(IsMod, 2)
+		K.ModUp := 1, K["M" IsMod] := K["P" IsMod] := ""
+		If (K["ML" sIsMod] = "" && K["MR" sIsMod] = "")
+			K["M" sIsMod] := K["P" sIsMod] := ""
+		If (!Hotkey_Arr("Up") && K.HK != "")
 			Return 1
 	}
-	(IsMod) ? (KeyName := Hotkey := Prefix := "", OnlyMods := 1)
-	: (KeyName := GetKeyName(Param1 Param2)
-	,  Hotkey := InStr(Symbols, "|" Param1 "|") ? Param1 : KeyName
-	,  KeyName := Hotkey = "vkBF" ? "/" : KeyName
-	,  Prefix := PCtrl PAlt PShift PWin, OnlyMods := 0)
-	Hotkey_SetVarName(VarName, Prefix Hotkey)
-	WriteText := MCtrl MAlt MShift MWin KeyName = "" ? Hotkey_Arr("TipNo") : MCtrl MAlt MShift MWin KeyName
-	SendMessage, 0xC, 0, &WriteText, , ahk_id %ControlHandle%
+	Else If (In.Opt = "OnlyMods")
+	{
+		If !ModsOnly
+			Return 0
+		K.MCtrl := K.MAlt := K.MShift := K.MWin := K.Mods := ""
+		K.PCtrl := K.PAlt := K.PShift := K.PWin := K.Pref := ""
+		K.PRCtrl := K.PRAlt := K.PRShift := K.PRWin := ""
+		K.PLCtrl := K.PLAlt := K.PLShift := K.PLWin := K.LRPref := ""
+		K.MRCtrl := K.MRAlt := K.MRShift := K.MRWin := ""
+		K.MLCtrl := K.MLAlt := K.MLShift := K.MLWin := K.LRMods := ""
+		Func(Hotkey_Arr("Func")).Call(K)
+		Return ModsOnly := 0
+	}
+	Else If (In.Opt = "GetMod")
+		Return !!(K.PCtrl K.PAlt K.PShift K.PWin)
+	K.UP := In.UP, K.IsJM := 0, K.Time := In.Time, K.NFP := In.NFP, K.IsMod := IsMod
+	K.VK := In.VK, K.SC := In.SC
+	K.Mods := K.MCtrl K.MAlt K.MShift K.MWin
+	K.LRMods := K.MLCtrl K.MRCtrl K.MLAlt K.MRAlt K.MLShift K.MRShift K.MLWin K.MRWin
+	K.TK := GetKeyName(K.VK K.SC), K.TK := K.TK = "" ? K.VK K.SC : K.TK
+	(IsMod) ? (K.HK := K.Pref := K.LRPref := K.Name := "", ModsOnly := K.Mods = "" ? 0 : 1)
+	: (K.HK := StrLen(K.TK) = 1 && !Instr("1234567890-=", K.TK) ? K.VK : K.TK
+	, K.Name := K.HK = "vkBF" ? "/" : K.TK
+	, (StrLen(K.Name) = 1 ? (K.TK := K.Name := Format("{:U}", K.Name)) : 0)
+	, K.Pref := K.PCtrl K.PAlt K.PShift K.PWin
+	, K.LRPref := K.PLCtrl K.PRCtrl K.PLAlt K.PRAlt K.PLShift K.PRShift K.PLWin K.PRWin
+	, ModsOnly := 0)
+	Func(Hotkey_Arr("Func")).Call(K)
 	Return 1
 
-Hotkey_PressName:
-	KeyName := Hotkey := A_ThisHotkey
-	Prefix := PCtrl PAlt PShift PWin
-	OnlyMods := 0
-	Hotkey_SetVarName(VarName, Prefix Hotkey)
-	WriteText := MCtrl MAlt MShift MWin KeyName
-	SendMessage, 0xC, 0, &WriteText, , ahk_id %ControlHandle%
-	Return
+Hotkey_PressJoy:
+Hotkey_PressMouse:
+	K.Time := A_TickCount
+	K.Mods := K.MCtrl K.MAlt K.MShift K.MWin
+	K.LRMods := K.MLCtrl K.MRCtrl K.MLAlt K.MRAlt K.MLShift K.MRShift K.MLWin K.MRWin
+	K.Pref := K.PCtrl K.PAlt K.PShift K.PWin
+	K.LRPref := K.PLCtrl K.PRCtrl K.PLAlt K.PRAlt K.PLShift K.PRShift K.PLWin K.PRWin
+	K.HK := K.Name := K.TK := A_ThisHotkey, ModsOnly := K.NFP := K.UP := 0, K.IsMod := K.SC := ""
+	K.IsJM := A_ThisLabel = "Hotkey_PressJoy" ? 1 : 2
+	K.VK := A_ThisLabel = "Hotkey_PressJoy" ? "" : Format("vk{:X}", GetKeyVK(A_ThisHotkey))
+	Func(Hotkey_Arr("Func")).Call(K)
+	Return 1
 }
 
-Hotkey_WinEvent(hWinEventHook, event, hwnd) {
-	Local Name, S_FormatInteger
+Hotkey_MouseAndJoyInit(Options) {
+	Static MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
+	Local S_FormatInteger
+	#If Hotkey_Arr("Hook")
+	#If Hotkey_Arr("Hook") && !Hotkey_Main({Opt:"GetMod"})
+	#If Hotkey_Arr("Hook") && Hotkey_Main({Opt:"GetMod"})
+	#If
+	Option := InStr(Options, "M") ? "On" : "Off"
+	Hotkey, IF, Hotkey_Arr("Hook")
+	Loop, Parse, MouseKey, |
+		Hotkey, %A_LoopField%, Hotkey_PressMouse, % Option
+	Option := InStr(Options, "L") ? "On" : "Off"
+	Hotkey, IF, Hotkey_Arr("Hook") && Hotkey_Main({Opt:"GetMod"})
+	Hotkey, LButton, Hotkey_PressMouse, % Option
+
+	Option := InStr(Options, "R") ? "On" : "Off"
+	Hotkey, IF, Hotkey_Arr("Hook")
+	Hotkey, RButton, Hotkey_PressMouse, % Option
+
+	Option := InStr(Options, "J") ? "On" : "Off"
 	S_FormatInteger := A_FormatInteger
-	SetFormat, IntegerFast, H
-	Name := Hotkey_Arr(hwnd)
+	SetFormat, IntegerFast, D
+	Hotkey, IF, Hotkey_Arr("Hook") && !Hotkey_Main({Opt:"GetMod"})
+	Loop, 128
+		Hotkey % Ceil(A_Index / 32) "Joy" Mod(A_Index - 1, 32) + 1, Hotkey_PressJoy, % Option
 	SetFormat, IntegerFast, %S_FormatInteger%
-	(Name = "") ? Hotkey_Main("Control", 0) : Hotkey_Main("Control", hwnd, Name)
-}
-
-Hotkey_ExtKeyInit(Options) {
-	Local S_FormatInteger, MouseKey
-	#IF Hotkey_Arr("Hook")
-	#IF Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
-	#IF Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
-	#IF
-	IfInString, Options, M
-	{
-		MouseKey := "MButton|WheelDown|WheelUp|WheelRight|WheelLeft|XButton1|XButton2"
-		Hotkey, IF, Hotkey_Arr("Hook")
-		Loop, Parse, MouseKey, |
-			Hotkey, %A_LoopField%, Hotkey_PressName
-	}
-	IfInString, Options, J
-	{
-		S_FormatInteger := A_FormatInteger
-		SetFormat, IntegerFast, D
-		Hotkey, IF, Hotkey_Arr("Hook") && !Hotkey_Main("GetMod")
-		Loop, 128
-			Hotkey % Ceil(A_Index/32) "Joy" Mod(A_Index-1,32)+1, Hotkey_PressName
-		SetFormat, IntegerFast, %S_FormatInteger%
-	}
-	IfInString, Options, L
-	{
-		Hotkey, IF, Hotkey_Arr("Hook") && Hotkey_Main("GetMod")
-		Hotkey, LButton, Hotkey_PressName
-	}
-	IfInString, Options, R
-	{
-		Hotkey, IF, Hotkey_Arr("Hook")
-		Hotkey, RButton, Hotkey_PressName
-		Hotkey_Arr("SetRButton", 1)
-	}
 	Hotkey, IF
 }
 
+Hotkey_Hook(Val = 1) {
+	Hotkey_Arr("Hook", Val)
+	!Val && Hotkey_Main({Opt:"OnlyMods"})
+}
+
+Hotkey_Arr(P*) {
+	Static Arr := {}
+	Return P.MaxIndex() = 1 ? Arr[P[1]] : (Arr[P[1]] := P[2])
+}
+
+	;  http://forum.script-coding.com/viewtopic.php?id=6350
+
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
-	Static Mods := {"vkA4":"Alt","vkA5":"Alt","vkA2":"Ctrl","vkA3":"Ctrl"
-		,"vkA0":"Shift","vkA1":"Shift","vk5B":"Win","vk5C":"Win"}
+	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
+		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}
 		, oMem := [], HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
-	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod
+	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP
 	Critical
 
 	If !Hotkey_Arr("Hook")
 		Return DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam)
 	pHeap := DllCall("HeapAlloc", Ptr, hHeap, UInt, HEAP_ZERO_MEMORY, Ptr, Size, Ptr)
 	DllCall("RtlMoveMemory", Ptr, pHeap, Ptr, lParam, Ptr, Size), oMem.Push([wParam, pHeap])
-	SetTimer, Hotkey_LLKPWork, -10
+	SetTimer, Hotkey_HookProcWork, -10
 	Return nCode < 0 ? DllCall("CallNextHookEx", "Ptr", 0, "Int", nCode, "UInt", wParam, "UInt", lParam) : 1
 
-	Hotkey_LLKPWork:
+	Hotkey_HookProcWork:
 		While (oMem[1] != "")
 		{
-			IF Hotkey_Arr("Hook")
+			If Hotkey_Arr("Hook")
 			{
 				Wp := oMem[1][1], Lp := oMem[1][2]
 				VK := Format("vk{:X}", NumGet(Lp + 0, "UInt"))
 				Ext := NumGet(Lp + 0, 8, "UInt")
 				SC := Format("sc{:X}", (Ext & 1) << 8 | NumGet(Lp + 0, 4, "UInt"))
+				NFP := !!(Ext & 16)			;  Не физическое нажатие
+				Time := NumGet(Lp + 12, "UInt")
 				IsMod := Mods[VK]
-				If (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
-					(IsMod := Mods[VK]) ? Hotkey_Main("Mod", IsMod) : Hotkey_Main(VK, SC)
-				Else IF ((Wp = 0x101 || Wp = 0x105) && VK != "vk5D")   ;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105, AppsKey = "vk5D"
-					(IsMod := Mods[VK]) ? Hotkey_Main("ModUp", IsMod) : 0
+				If Hotkey_Arr("Hook") && (Wp = 0x100 || Wp = 0x104)		;  WM_KEYDOWN := 0x100, WM_SYSKEYDOWN := 0x104
+					IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Down", IsMod:IsMod, NFP:NFP, Time:Time, UP:0})
+					: Hotkey_Main({VK:VK, SC:SC, NFP:NFP, Time:Time, UP:0})
+				Else If Hotkey_Arr("Hook") && (Wp = 0x101 || Wp = 0x105)		;  WM_KEYUP := 0x101, WM_SYSKEYUP := 0x105
+					IsMod ? Hotkey_Main({VK:VK, SC:SC, Opt:"Up", IsMod:IsMod, NFP:NFP, Time:Time, UP:1})
+					: (Hotkey_Arr("Up") ? Hotkey_Main({VK:VK, SC:SC, NFP:NFP, Time:Time, UP:1}) : 0)
 			}
 			DllCall("HeapFree", Ptr, hHeap, UInt, 0, Ptr, Lp)
 			oMem.RemoveAt(1)
@@ -171,106 +155,13 @@ Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 		Return
 }
 
-Hotkey_SetWinEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, idThread, dwFlags) {
-	Return DllCall("SetWinEventHook" , "UInt", eventMin, "UInt", eventMax, "Ptr", hmodWinEventProc
-			, "Ptr", lpfnWinEventProc, "UInt", idProcess, "UInt", idThread, "UInt", dwFlags, "Ptr")
-}
-
-Hotkey_SetWindowsHookEx() {
-	Return DllCall("SetWindowsHookEx" . (A_IsUnicode ? "W" : "A")
-		, "Int", 13   ;  WH_KEYBOARD_LL := 13
-		, "Ptr", RegisterCallback("Hotkey_LowLevelKeyboardProc", "Fast")
-		, "Ptr", DllCall("GetModuleHandle", "UInt", 0, "Ptr")
-		, "UInt", 0, "Ptr")
-}
-
-Hotkey_Exit() {
-	DllCall("UnhookWindowsHookEx", "Ptr", Hotkey_Arr("hHook"))
-}
-
-Hotkey_SetVarName(Name, Value) {
-	Global
-	%Name% := Value
-}
-
-Hotkey_Arr(P*) {
-	Static Arr := {TipNo:"Нет"}
-	Return P.MaxIndex() = 1 ? Arr[P[1]] : (Arr[P[1]] := P[2])
-}
-
-Hotkey_IsRegControl() {
-	Local Control
-	MouseGetPos,,,, Control, 2
-	Return Hotkey_Arr(Control) != ""
-}
-
-Hotkey_RButton() {
-	If Hotkey_Arr("SetRButton")
-		Return
-	#IF Hotkey_IsRegControl()
-	#IF
-	Hotkey, IF, Hotkey_IsRegControl()
-	Hotkey, RButton Up, Hotkey_RButton
-	Hotkey, IF
-	Return
-
-	Hotkey_RButton:
-		Click
-		Return
-}
-
-	; -------------------------------------- Format func --------------------------------------
-
-Hotkey_IniRead(Key, Section, Path, SetVar = 0) {
-	Local Data
-	IniRead, Data, % Path, % Section, % Key, % A_Space
-	If SetVar
-		Hotkey_SetVarName(Key, Data)
-	Return Hotkey_HKToStr(Data)
-}
-
-Hotkey_HKToStr(Key) {
-	Local K, K1, K2, KeyName
-	RegExMatch(Key, "S)^([\^\+!#]*)\{?(.*?)}?$", K)
-	If (K2 = "")
-		Return "" Hotkey_Arr("TipNo")
-	If InStr(K2, "vk")
-		KeyName := K2 = "vkBF" ? "/" : GetKeyName(K2)
-	Else
-		KeyName := K2
-	Return (InStr(K1,"^")?"Ctrl+":"")(InStr(K1,"!")?"Alt+":"")
-			. (InStr(K1,"+")?"Shift+":"")(InStr(K1,"#")?"Win+":"") KeyName
-}
-
-Hotkey_StrToHK(Str) {
-	Static Buttons := ":ж:`;:|vkBA| :=:|vkBB| :б:,:|vkBC| :-:|vkBD| :ю:.:|vkBE|"
-		. ":/:|vkBF| :``:ё:|vkC0| :х:[:|vkDB| :\:|vkDC| :ъ:]:|vkDD| :э:':|vkDE|"
-		. ":A:|vk41| :B:|vk42| :C:|vk43| :D:|vk44| :E:|vk45| :F:|vk46| :G:|vk47|"
-		. ":H:|vk48| :I:|vk49| :J:|vk4A| :K:|vk4B| :L:|vk4C| :M:|vk4D| :N:|vk4E|"
-		. ":O:|vk4F| :P:|vk50| :Q:|vk51| :R:|vk52| :S:|vk53| :T:|vk54| :U:|vk55|"
-		. ":V:|vk56| :W:|vk57| :X:|vk58| :Y:|vk59| :Z:|vk5A|"
-	Local K, K1, K2, vk, vk1, vk2
-
-	If (Str = Hotkey_Arr("TipNo") || Str = "" || SubStr(Str, 0) ~= "\+|\s+")
-		Return ""
-	RegExMatch(Str, "S)(.*\+)?(.*)", K)
-	If (StrLen(K2) = 1)
-		RegExMatch(Buttons, "Si)\Q:" K2 ":\E.*?\|(.*?)\|", vk)
-	Return (InStr(K1,"Ctrl+")?"^":"")(InStr(K1,"Alt+")?"!":"")
-		. (InStr(K1,"Shift+")?"+":"")(InStr(K1,"Win+")?"#":"")(vk1 = "" ? K2 : vk1)
-}
-
-Hotkey_HKToSend(Key, Section = "", Path = "") {
-	Local Data
-	If (Section != "")
-		IniRead, Data, % Path, % Section, % Key, % A_Space
-	Return RegExReplace(Data, "S)[^\^!\+#].*", "{$0}")
-}
-
-Hotkey_GetVar(VarName)  {
-	Local D, D1, D2, Hwnd, Text
-	RegExMatch(VarName, "S)(.*:)?\s*(.*)", D)
-	GuiControlGet, Hwnd, % (D1 = "" ? "1:" : D1) "Hwnd", % D2
-	ControlGetText, Text,, ahk_id %Hwnd%
-	Return Hotkey_StrToHK(Text)
+Hotkey_SetHook(On = 1) {
+	Static Hook
+	DllCall("UnhookWindowsHookEx", "Ptr", Hook), Hook := "", Hotkey_Hook(0)
+	If (On = 1)
+		Hook := DllCall("SetWindowsHookEx" . (A_IsUnicode ? "W" : "A")
+				, "Int", 13   ;  WH_KEYBOARD_LL
+				, "Ptr", RegisterCallback("Hotkey_LowLevelKeyboardProc", "Fast")
+				, "Ptr", DllCall("GetModuleHandle", "UInt", 0, "Ptr")
+				, "UInt", 0, "Ptr")
 }
