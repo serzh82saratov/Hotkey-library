@@ -11,7 +11,7 @@ Hotkey_Init(Func, Options = "") {
 
 Hotkey_Main(In) {
 	Static Prefix := {"LAlt":"<!","LCtrl":"<^","LShift":"<+","LWin":"<#"
-		,"RAlt":">!","RCtrl":">^","RShift":">+","RWin":">#"}, K:={}, ModsOnly
+	,"RAlt":">!","RCtrl":">^","RShift":">+","RWin":">#"}, K := {}, ModsOnly
 	Local IsMod, sIsMod
 	IsMod := In.IsMod
 	If (In.Opt = "Down") {
@@ -113,8 +113,8 @@ Hotkey_Arr(P*) {
 
 Hotkey_LowLevelKeyboardProc(nCode, wParam, lParam) {
 	Static Mods := {"vkA4":"LAlt","vkA5":"RAlt","vkA2":"LCtrl","vkA3":"RCtrl"
-		,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}
-		, oMem := [], HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
+	,"vkA0":"LShift","vkA1":"RShift","vk5B":"LWin","vk5C":"RWin"}, oMem := []
+	, HEAP_ZERO_MEMORY := 0x8, Size := 16, hHeap := DllCall("GetProcessHeap", Ptr)
 	Local pHeap, Wp, Lp, Ext, VK, SC, IsMod, Time, NFP
 	Critical
 	If !Hotkey_Arr("Hook")
